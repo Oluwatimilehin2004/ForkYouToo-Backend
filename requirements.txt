@@ -1,16 +1,20 @@
-asgiref==3.11.1
-certifi==2026.2.25
-charset-normalizer==3.4.6
-Django==6.0.3
-django-cors-headers==4.9.0
-djangorestframework==3.17.1
-djangorestframework_simplejwt==5.5.1
-idna==3.11
-pillow==12.1.1
-PyJWT==2.12.1
-python-dotenv==1.2.2
-redis==7.4.0
-requests==2.33.0
-sqlparse==0.5.5
-tzdata==2025.3
-urllib3==2.6.3
+# Django Core
+Django==4.2.11
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+
+# Authentication
+djangorestframework-simplejwt==5.3.0
+PyJWT==2.8.0
+
+# Database
+psycopg2-binary==2.9.9
+
+# HTTP Requests
+requests==2.31.0
+
+# Image Handling
+Pillow==10.2.0
+
+# Environment Variables
+python-dotenv==1.0.1
