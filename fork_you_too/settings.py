@@ -27,7 +27,12 @@ SECRET_KEY = 'django-insecure-o$)!h1s%nuk7!9$-^g#1_$0xv^y7v3+ba78s%-!42w^lw^xpl)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1',
+    'localhost',
+    'www.wwwpapa.tech',
+    'wwwpapa.tech',
+    '54.86.55.58',
+    '98.81.240.103']
 
 
 # Application definition
@@ -42,7 +47,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
-    'userapp'
+    'userapp',
+    'corsheaders'
 ]
 
 # add simplejwt settinngs
@@ -68,6 +74,7 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -76,6 +83,30 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "https://www.wwwpapa.tech",
+    "http://www.wwwpapa.tech",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+]
+
+# Or allow all origins for testing (not recommended for production)
+CORS_ALLOW_ALL_ORIGINS = True  # Only for testing
+
+# Allow credentials
+CORS_ALLOW_CREDENTIALS = True
+
+# Allow specific methods
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
 ]
 
 ROOT_URLCONF = 'fork_you_too.urls'
