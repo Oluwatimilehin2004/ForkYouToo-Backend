@@ -35,4 +35,4 @@ node_modules/
 npm-debug.log
 
 # Docker
-*.dockerignore
+*.dockerignore.env
