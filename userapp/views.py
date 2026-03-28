@@ -18,8 +18,6 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
-print(settings.GITHUB_TOKEN)
-
 
 # ─────────────────────────────────────────────
 # AUTH
@@ -217,38 +215,67 @@ def alu_repos(request):
     Query params:
       ?page=1        (default: 1)
       ?per_page=20   (default: 20)
+      ?sort=recent|stars|forks  (default: recent)
     """
-    page = int(request.GET.get('page', 1))
-    per_page = int(request.GET.get('per_page', 20))
+    try:
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 20))
+        sort_by = request.GET.get('sort', 'recent')  # recent | stars | forks
 
-    # Try to get from cache first — avoids all GitHub API calls on subsequent requests
-    all_repos = cache.get(CACHE_KEY)
+        if page < 1:
+            page = 1
+        if per_page < 1 or per_page > 100:
+            per_page = 20
 
-    if all_repos is None:
-        logger.info("Cache miss — fetching repos from GitHub (parallel)")
-        all_repos = fetch_all_alu_repos()
-        cache.set(CACHE_KEY, all_repos, timeout=CACHE_TIMEOUT)
-        logger.info(f"Cached {len(all_repos)} repos for {CACHE_TIMEOUT // 60} minutes")
-    else:
-        logger.info(f"Cache hit — serving {len(all_repos)} repos from cache")
+        # Try to get from cache first — avoids all GitHub API calls on subsequent requests
+        all_repos = cache.get(CACHE_KEY)
 
-    total = len(all_repos)
-    start = (page - 1) * per_page
-    end = start + per_page
-    page_repos = all_repos[start:end]
+        if all_repos is None:
+            logger.info("Cache miss — fetching repos from GitHub (parallel)")
+            all_repos = fetch_all_alu_repos()
+            if not all_repos:
+                return Response({
+                    'success': False,
+                    'error': 'Could not fetch repositories from GitHub. The API may be temporarily unavailable. Please try again later.'
+                }, status=503)
+            cache.set(CACHE_KEY, all_repos, timeout=CACHE_TIMEOUT)
+            logger.info(f"Cached {len(all_repos)} repos for {CACHE_TIMEOUT // 60} minutes")
+        else:
+            logger.info(f"Cache hit — serving {len(all_repos)} repos from cache")
 
-    return Response({
-        'success': True,
-        'total_count': total,
-        'page': page,
-        'per_page': per_page,
-        'has_more': end < total,
-        'items': page_repos,
-        'filter': {
-            'since': (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d"),
-            'message': 'Repositories updated in the last year'
-        }
-    })
+        # Apply user-requested sort
+        if sort_by == 'stars':
+            sorted_repos = sorted(all_repos, key=lambda x: x.get('stargazers_count', 0), reverse=True)
+        elif sort_by == 'forks':
+            sorted_repos = sorted(all_repos, key=lambda x: x.get('forks_count', 0), reverse=True)
+        else:  # default: recent
+            sorted_repos = sorted(all_repos, key=lambda x: x.get('pushed_at', ''), reverse=True)
+
+        total = len(sorted_repos)
+        start = (page - 1) * per_page
+        end = start + per_page
+        page_repos = sorted_repos[start:end]
+
+        return Response({
+            'success': True,
+            'total_count': total,
+            'page': page,
+            'per_page': per_page,
+            'sort': sort_by,
+            'has_more': end < total,
+            'items': page_repos,
+            'filter': {
+                'since': (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d"),
+                'message': 'Repositories updated in the last year'
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"alu_repos error: {e}")
+        return Response({
+            'success': False,
+            'error': 'An unexpected error occurred while loading repositories. Please try again.'
+        }, status=500)
 
 
 # ─────────────────────────────────────────────
